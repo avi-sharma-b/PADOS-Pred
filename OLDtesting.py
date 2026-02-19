@@ -23,7 +23,7 @@ out_path = "Clean_Cs_GSVE_Mh_zip_plus_admin.csv"
 df = pd.read_csv(in_path)
 
 wanted = [
-    "PADO",                 # label (keep, but don't use as feature)
+    "PADO",                
     "zip_code",
     "zipcode_gsv",
     "cod_postal",

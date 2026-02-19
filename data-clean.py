@@ -1,6 +1,6 @@
 import pandas as pd
 
-
+import numpy as np
 
 # for _, row in df.iterrows():
 
@@ -188,59 +188,59 @@ def clean_and_zfill(s: pd.Series, width: int, *, keep_alnum: bool = True) -> pd.
 ############################################ V4 to V5 ############################################
 
 
-ENRICHED_CSV = "V4_Clean_Cs_GSVE_Mh.csv"        
-AGEB_CSV  = "chiapas_INEGI_AGEBonly.csv" 
-OUT_CSV   = "V5_Clean_Cs_GSVE_Mh.csv"
+# ENRICHED_CSV = "V4_Clean_Cs_GSVE_Mh.csv"        
+# AGEB_CSV  = "chiapas_INEGI_AGEBonly.csv" 
+# OUT_CSV   = "V5_Clean_Cs_GSVE_Mh.csv"
 
-def clean(s: pd.Series) -> pd.Series:
-    return (s.astype("string")
-              .str.strip()
-              .str.replace(r"\.0$", "", regex=True))
+# def clean(s: pd.Series) -> pd.Series:
+#     return (s.astype("string")
+#               .str.strip()
+#               .str.replace(r"\.0$", "", regex=True))
 
-def zpad(s: pd.Series, n: int) -> pd.Series:
-    s = clean(s)
-    return s.where(s.isna(), s.str.zfill(n))
-
-
-ph = pd.read_csv(ENRICHED_CSV, dtype=str)
-ph.columns = ph.columns.str.strip()
-
-# rebuild key_ageb (same as before)
-ph["Cve_ent"] = zpad(ph["Cve_ent"], 2)
-ph["Cve_mun"] = zpad(ph["Cve_mun"], 3)
-ph["Cve_loc"] = zpad(ph["Cve_loc"], 4)
-ph["Ageb"]    = clean(ph["Ageb"]).str.upper().str.zfill(4)
-ph["key_ageb"] = ph["Cve_ent"] + ph["Cve_mun"] + ph["Cve_loc"] + ph["Ageb"]
+# def zpad(s: pd.Series, n: int) -> pd.Series:
+#     s = clean(s)
+#     return s.where(s.isna(), s.str.zfill(n))
 
 
-inegi = pd.read_csv(AGEB_CSV, dtype=str)
-inegi.columns = inegi.columns.str.strip()
+# ph = pd.read_csv(ENRICHED_CSV, dtype=str)
+# ph.columns = ph.columns.str.strip()
 
-inegi["ENTIDAD"] = zpad(inegi["ENTIDAD"], 2)
-inegi["MUN"]     = zpad(inegi["MUN"], 3)
-inegi["LOC"]     = zpad(inegi["LOC"], 4)
-inegi["AGEB"]    = clean(inegi["AGEB"]).str.upper().str.zfill(4)
-inegi["MZA"]     = zpad(inegi["MZA"], 3)
-
-ageb_totals = inegi[(inegi["MZA"] == "000") & (inegi["AGEB"] != "0000")].copy()
-ageb_totals["key_ageb"] = ageb_totals["ENTIDAD"] + ageb_totals["MUN"] + ageb_totals["LOC"] + ageb_totals["AGEB"]
-
-if "TOTHOG" not in ageb_totals.columns:
-    raise ValueError("TOTHOG not found in INEGI file columns. Check you downloaded the AGEB+MZA CPV2020 product.")
-
-ageb_households = ageb_totals[["key_ageb", "TOTHOG"]].copy()
-ageb_households["TOTHOG"] = pd.to_numeric(ageb_households["TOTHOG"], errors="coerce")
+# # rebuild key_ageb (same as before)
+# ph["Cve_ent"] = zpad(ph["Cve_ent"], 2)
+# ph["Cve_mun"] = zpad(ph["Cve_mun"], 3)
+# ph["Cve_loc"] = zpad(ph["Cve_loc"], 4)
+# ph["Ageb"]    = clean(ph["Ageb"]).str.upper().str.zfill(4)
+# ph["key_ageb"] = ph["Cve_ent"] + ph["Cve_mun"] + ph["Cve_loc"] + ph["Ageb"]
 
 
-if ageb_households["key_ageb"].duplicated().any():
-    raise ValueError("INEGI key_ageb not unique after filtering (MZA==000 & AGEB!=0000).")
+# inegi = pd.read_csv(AGEB_CSV, dtype=str)
+# inegi.columns = inegi.columns.str.strip()
+
+# inegi["ENTIDAD"] = zpad(inegi["ENTIDAD"], 2)
+# inegi["MUN"]     = zpad(inegi["MUN"], 3)
+# inegi["LOC"]     = zpad(inegi["LOC"], 4)
+# inegi["AGEB"]    = clean(inegi["AGEB"]).str.upper().str.zfill(4)
+# inegi["MZA"]     = zpad(inegi["MZA"], 3)
+
+# ageb_totals = inegi[(inegi["MZA"] == "000") & (inegi["AGEB"] != "0000")].copy()
+# ageb_totals["key_ageb"] = ageb_totals["ENTIDAD"] + ageb_totals["MUN"] + ageb_totals["LOC"] + ageb_totals["AGEB"]
+
+# if "TOTHOG" not in ageb_totals.columns:
+#     raise ValueError("TOTHOG not found in INEGI file columns. Check you downloaded the AGEB+MZA CPV2020 product.")
+
+# ageb_households = ageb_totals[["key_ageb", "TOTHOG"]].copy()
+# ageb_households["TOTHOG"] = pd.to_numeric(ageb_households["TOTHOG"], errors="coerce")
 
 
-out = ph.merge(ageb_households, on="key_ageb", how="left")
+# if ageb_households["key_ageb"].duplicated().any():
+#     raise ValueError("INEGI key_ageb not unique after filtering (MZA==000 & AGEB!=0000).")
 
-out.to_csv(OUT_CSV, index=False)
-print("Saved:", OUT_CSV)
-print("Missing rate for TOTHOG:", out["TOTHOG"].isna().mean())
+
+# out = ph.merge(ageb_households, on="key_ageb", how="left")
+
+# out.to_csv(OUT_CSV, index=False)
+# print("Saved:", OUT_CSV)
+# print("Missing rate for TOTHOG:", out["TOTHOG"].isna().mean())
 
 
 
@@ -282,3 +282,57 @@ Average Schooling: GRAPROES
 
 """
 
+# IN_CSV  = "V5_Clean_Cs_GSVE_Mh.csv"               
+# OUT_CSV = "V6_Clean_Cs_GSVE_Mh.csv"
+
+# df = pd.read_csv(IN_CSV)
+
+# needed = [
+#     "POBTOT", "TOTHOG",     "PDER_SS", "PCON_DISC", "PCON_LIMI",
+#     "VPH_C_ELEC", "VPH_AGUADV", "VPH_DRENAJ", "VPH_PISODT",
+#     "PRO_OCUP_C",   "GRAPROES"
+# ]
+# missing = [c for c in needed if c not in df.columns]
+# if missing:
+#     raise ValueError(f"Missing required columns: {missing}")
+
+
+# for c in needed:
+#     df[c] = pd.to_numeric(df[c], errors="coerce")
+
+
+# den_pop = df["POBTOT"].replace({0: np.nan})
+# den_hog = df["TOTHOG"].replace({0: np.nan})
+
+
+# df["insured_rate"]            = df["PDER_SS"] / den_pop
+# df["disability_rate"]         = (df["PCON_DISC"] + df["PCON_LIMI"]) / den_pop
+
+# df["electricity_access_rate"] = df["VPH_C_ELEC"] / den_hog
+# df["piped_water_access_rate"] = df["VPH_AGUADV"] / den_hog
+# df["drainage_access_rate"]    = df["VPH_DRENAJ"] / den_hog
+# df["floor_material_rate"]     = df["VPH_PISODT"] / den_hog
+
+
+# df["occupants_per_room"]      = df["PRO_OCUP_C"]
+# df["average_schooling"]       = df["GRAPROES"]
+
+# df.to_csv(OUT_CSV, index=False)
+# print("Saved:", OUT_CSV)
+
+
+
+
+IN_CSV  = "CleanIters/V6_Clean_Cs_GSVE_Mh.csv"               
+OUT_CSV = "readyToTrainV1.csv"
+
+df = pd.read_csv(IN_CSV)
+
+#print(df.columns.tolist()) 
+
+keepForTraining = ['pado','insured_rate', 'disability_rate', 'electricity_access_rate', 'piped_water_access_rate', 'drainage_access_rate', 'floor_material_rate', 'occupants_per_room', 'average_schooling']
+
+keep = [c for c in keepForTraining if c in df.columns]
+
+df = df[keep]  
+df.to_csv(OUT_CSV, index=False)  
